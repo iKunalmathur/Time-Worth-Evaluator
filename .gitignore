@@ -16,6 +16,7 @@ docs
 # Editor
 .vscode/*
 .cursor/*
+.agents/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -24,3 +25,6 @@ docs
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify
