@@ -33,6 +33,37 @@ const RATE_CHIP_COLORS = [
   { bg: 'var(--lilac-soft)', fg: '#9333ea', emoji: '✨' },
 ]
 
+const TICKER_PRESETS = [
+  {
+    id: 'doomscroll',
+    label: 'Doomscroll',
+    activeClass: 'bg-[var(--lilac)] text-white shadow-sm',
+    shareLabel: 'Doomscroll tax',
+    runningHint: 'feed got you…',
+  },
+  {
+    id: 'break',
+    label: 'Coffee Break',
+    activeClass: 'bg-[var(--accent)] text-white shadow-sm',
+    shareLabel: 'Break earnings',
+    runningHint: 'ka-ching…',
+  },
+  {
+    id: 'meeting',
+    label: 'Useless Meeting',
+    activeClass: 'bg-[var(--sky)] text-white shadow-sm',
+    shareLabel: 'Meeting burn',
+    runningHint: 'calendar tax…',
+  },
+  {
+    id: 'focus',
+    label: 'Focus Sprint',
+    activeClass: 'bg-[var(--mint)] text-[#0f3d38] shadow-sm',
+    shareLabel: 'Focus earnings',
+    runningHint: 'in the zone…',
+  },
+]
+
 const SHARE_CARD_THEMES = [
   {
     id: 'sunset',
@@ -251,7 +282,7 @@ export default function App() {
   const [currency, setCurrency] = useState(initial.currency)
   const [workDays, setWorkDays] = useState(initial.workDays)
   const [hoursPerDay, setHoursPerDay] = useState(initial.hoursPerDay)
-  const [theme, setTheme] = useState(initial.theme)
+  const [theme] = useState('light') // theme toggle disabled for now
   const [shareCardTheme, setShareCardTheme] = useState(
     SHARE_CARD_THEMES.some((t) => t.id === initial.shareCardTheme)
       ? initial.shareCardTheme
@@ -261,7 +292,7 @@ export default function App() {
   // Ticker state
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [preset, setPreset] = useState('break') // 'break' | 'meeting'
+  const [preset, setPreset] = useState('doomscroll') // doomscroll | break | meeting | focus
   const [attendees, setAttendees] = useState(5)
   const rafRef = useRef(null)
   const lastTsRef = useRef(null)
@@ -291,6 +322,7 @@ export default function App() {
 
   const multiplier = preset === 'meeting' ? Math.max(1, Number(attendees) || 1) : 1
   const accrued = elapsed * rates.perSecond * multiplier
+  const presetMeta = TICKER_PRESETS.find((p) => p.id === preset) || TICKER_PRESETS[0]
 
   // Theme
   useEffect(() => {
@@ -352,14 +384,18 @@ export default function App() {
   const outsourceCost = Number(hireCost) || 0
   const shouldOutsource = outsourceCost < diyValue && diyValue > 0
 
-  const badge =
-    preset === 'meeting'
-      ? attendees >= 8
-        ? 'Meeting Survivor'
-        : 'Calendar Warrior'
-      : elapsed >= 900
-        ? 'Professional Break Taker'
-        : 'Stealth Recharger'
+  const badge = (() => {
+    if (preset === 'meeting') {
+      return attendees >= 8 ? 'Meeting Survivor' : 'Calendar Warrior'
+    }
+    if (preset === 'doomscroll') {
+      return elapsed >= 900 ? 'Infinite Scroll Survivor' : 'Thumb Athlete'
+    }
+    if (preset === 'focus') {
+      return elapsed >= 1500 ? 'Deep Work Demon' : 'Flow State'
+    }
+    return elapsed >= 900 ? 'Professional Break Taker' : 'Stealth Recharger'
+  })()
 
   const downloadShareCard = async () => {
     if (!shareCardRef.current) return
@@ -446,15 +482,6 @@ export default function App() {
               <span className="text-[var(--lilac)]">✦</span>
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            className={btnSecondary()}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-          </button>
         </div>
       </header>
 
@@ -613,30 +640,18 @@ export default function App() {
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-extrabold">The Ticker</h2>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setPreset('break')
-                }}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-extrabold transition ${
-                  preset === 'break'
-                    ? 'bg-[var(--accent)] text-white shadow-sm'
-                    : 'bg-white/70 text-[var(--text-muted)]'
-                }`}
-              >
-                Coffee / Bathroom Break
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreset('meeting')}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-extrabold transition ${
-                  preset === 'meeting'
-                    ? 'bg-[var(--sky)] text-white shadow-sm'
-                    : 'bg-white/70 text-[var(--text-muted)]'
-                }`}
-              >
-                Useless Meeting
-              </button>
+              {TICKER_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPreset(p.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-extrabold transition ${
+                    preset === p.id ? p.activeClass : 'bg-white/70 text-[var(--text-muted)]'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -661,13 +676,25 @@ export default function App() {
             </div>
           )}
 
+          {preset === 'doomscroll' && (
+            <p className="mb-5 text-sm font-semibold text-[var(--text-muted)]">
+              Track what the feed costs you — every second of scroll is billable time in disguise.
+            </p>
+          )}
+
+          {preset === 'focus' && (
+            <p className="mb-5 text-sm font-semibold text-[var(--text-muted)]">
+              Deep work mode — watch your real hourly value stack while you stay in flow.
+            </p>
+          )}
+
           <div
             className={`mx-auto max-w-md rounded-[2rem] border-2 border-white/80 bg-white/70 px-6 py-8 text-center backdrop-blur-sm ${
               running ? 'ticker-live' : ''
             }`}
           >
             <div className="mb-2 text-xs font-extrabold uppercase tracking-widest text-[var(--text-muted)]">
-              {running ? 'ka-ching…' : 'hit start whenever'}
+              {running ? presetMeta.runningHint : 'hit start whenever'}
             </div>
             <div className="tabular mb-4 text-5xl font-bold tracking-tight text-[var(--text)] sm:text-6xl">
               {formatClock(elapsed)}
@@ -941,7 +968,7 @@ export default function App() {
                   </span>
                 </div>
                 <p className="mb-1 text-sm font-bold" style={{ color: cardTheme.muted }}>
-                  {preset === 'meeting' ? 'Meeting burn' : 'Break earnings'}
+                  {presetMeta.shareLabel}
                 </p>
                 <p
                   className="tabular mb-1 text-4xl font-bold"
@@ -1014,23 +1041,6 @@ function ClockIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function SunIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function MoonIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
