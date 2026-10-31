@@ -283,6 +283,7 @@ export default function App() {
   const [workDays, setWorkDays] = useState(initial.workDays)
   const [hoursPerDay, setHoursPerDay] = useState(initial.hoursPerDay)
   const [theme] = useState('light') // theme toggle disabled for now
+  const [infoOpen, setInfoOpen] = useState(false)
   const [shareCardTheme, setShareCardTheme] = useState(
     SHARE_CARD_THEMES.some((t) => t.id === initial.shareCardTheme)
       ? initial.shareCardTheme
@@ -330,6 +331,15 @@ export default function App() {
     if (theme === 'dark') root.classList.add('dark')
     else root.classList.remove('dark')
   }, [theme])
+
+  useEffect(() => {
+    if (!infoOpen) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setInfoOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [infoOpen])
 
   // Persist
   useEffect(() => {
@@ -482,8 +492,83 @@ export default function App() {
               <span className="text-[var(--lilac)]">✦</span>
             </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setInfoOpen(true)}
+            className={btnSecondary()}
+            aria-label="About this project"
+          >
+            <InfoIcon />
+            <span className="hidden sm:inline">About</span>
+          </button>
         </div>
       </header>
+
+      {infoOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="about-title"
+          onClick={() => setInfoOpen(false)}
+        >
+          <div
+            className="fade-up max-h-[85vh] w-full max-w-md overflow-y-auto rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow)] sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--accent-deep)]">
+                  About
+                </p>
+                <h2 id="about-title" className="text-xl font-extrabold leading-tight">
+                  What&apos;s My Time Worth?
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInfoOpen(false)}
+                className="rounded-full border-2 border-[var(--border)] px-3 py-1 text-sm font-extrabold text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm font-semibold leading-relaxed text-[var(--text-muted)]">
+              <div className="rounded-2xl bg-[var(--accent-soft)] p-4">
+                <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--accent-deep)]">
+                  What
+                </p>
+                <p className="text-[var(--text)]">
+                  A playful calculator that turns your salary into a live per-second value. Track
+                  earnings during doomscrolls, coffee breaks, meetings, and focus sprints — then see
+                  purchases and chores in hours of your life.
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[var(--sky-soft)] p-4">
+                <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[#5b63d6]">
+                  Why
+                </p>
+                <p className="text-[var(--text)]">
+                  Paychecks feel abstract until you watch them tick. This app makes time → money
+                  concrete (and shareable), so everyday choices feel a little more honest — without
+                  the spreadsheet guilt trip.
+                </p>
+              </div>
+
+              <p className="text-xs text-[var(--text-muted)]">
+                Everything stays in your browser. No accounts, no backend, no tracking.
+              </p>
+            </div>
+
+            <button type="button" onClick={() => setInfoOpen(false)} className={`${btnPrimary()} mt-5 w-full`}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
         {/* Hero + Income Setup */}
@@ -1041,6 +1126,15 @@ function ClockIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function InfoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6M12 7h.01" strokeLinecap="round" />
     </svg>
   )
 }
